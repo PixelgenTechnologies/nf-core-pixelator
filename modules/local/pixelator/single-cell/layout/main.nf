@@ -25,7 +25,7 @@ process PIXELATOR_LAYOUT {
 
     script:
 
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ''
 
     """
@@ -41,6 +41,21 @@ process PIXELATOR_LAYOUT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
+        pixelator: \$(echo \$(pixelator --version 2>/dev/null) | sed 's/pixelator, version //g' )
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+
+    """
+    mkdir layout
+    touch "${prefix}.pixelator-layout.log"
+    touch "layout/${prefix}.dataset.pxl"
+    touch "layout/${prefix}.report.json"
+    touch "layout/${prefix}.meta.json"
+
+    cat <<-END_VERSIONS > versions.yml
         pixelator: \$(echo \$(pixelator --version 2>/dev/null) | sed 's/pixelator, version //g' )
     END_VERSIONS
     """

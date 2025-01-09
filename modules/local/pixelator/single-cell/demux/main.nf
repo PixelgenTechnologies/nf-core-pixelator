@@ -26,7 +26,7 @@ process PIXELATOR_DEMUX {
     script:
     // --design is passed in meta and added to args through modules.conf
 
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def args = task.ext.args ?: ''
     def panelOpt = (
         panel      ? "--panel $panel"      :
@@ -45,6 +45,23 @@ process PIXELATOR_DEMUX {
         $panelOpt \\
         $args \\
         ${reads}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        pixelator: \$(echo \$(pixelator --version 2>/dev/null) | sed 's/pixelator, version //g' )
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+
+    """
+    mkdir demux
+    touch "${prefix}.pixelator-demux.log"
+    touch "demux/${prefix}.report.json"
+    touch "demux/${prefix}.meta.json"
+    touch "demux/${prefix}.processed.fq.gz"
+    touch "demux/${prefix}.failed.fq.gz"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
