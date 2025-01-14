@@ -31,6 +31,8 @@ process PIXELATOR_QC {
     tuple val(meta), path("preqc/*.meta.json")                       , emit: preqc_metadata
     tuple val(meta), path("{adapterqc,preqc}/*.meta.json")           , emit: metadata
 
+    tuple val(meta), path("*pixelator-preqc.log")                    , emit: preqc_log
+    tuple val(meta), path("*pixelator-adapterqc.log")                , emit: adapterqc_log
     tuple val(meta), path("*pixelator-*.log")                        , emit: log
 
     path "versions.yml"                                              , emit: versions
@@ -39,9 +41,9 @@ process PIXELATOR_QC {
     task.ext.when == null || task.ext.when
 
     script:
-    assert meta.design
+    assert meta.design : "Missing `design` field in meta map"
 
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def preqc_args = task.ext.args ?: ''
     def adapterqc_args = task.ext.args2 ?: ''
 
@@ -49,7 +51,7 @@ process PIXELATOR_QC {
     """
     pixelator \\
         --cores $task.cpus \\
-        --log-file ${prefix}.pixelator-qc.log \\
+        --log-file ${prefix}.pixelator-preqc.log \\
         --verbose \\
         single-cell \\
         preqc \\
@@ -64,7 +66,7 @@ process PIXELATOR_QC {
 
     pixelator \\
         --cores $task.cpus \\
-        --log-file ${prefix}.pixelator-qc.log \\
+        --log-file ${prefix}.pixelator-adapterqc.log \\
         --verbose \\
         single-cell \\
         adapterqc \\
@@ -83,16 +85,16 @@ process PIXELATOR_QC {
 
     """
     mkdir preqc
-    touch "preqc/${prefix}.processed.fq.gz"
-    touch "preqc/${prefix}.failed.fq.gz"
+    echo "" | gzip >> "preqc/${prefix}.processed.fq.gz"
+    echo "" | gzip >> "preqc/${prefix}.failed.fq.gz"
     touch "preqc/${prefix}.report.json"
     touch "preqc/${prefix}.meta.json"
     touch "preqc/${prefix}.qc-report.html"
     touch "${prefix}.pixelator-preqc.log"
 
     mkdir adapterqc
-    touch "adapterqc/${prefix}.processed.fq.gz"
-    touch "adapterqc/${prefix}.failed.fq.gz"
+    echo "" | gzip >> "adapterqc/${prefix}.processed.fq.gz"
+    echo "" | gzip >> "adapterqc/${prefix}.failed.fq.gz"
     touch "adapterqc/${prefix}.report.json"
     touch "adapterqc/${prefix}.meta.json"
     touch "${prefix}.pixelator-adapterqc.log"
